@@ -9,7 +9,10 @@ from bs4 import BeautifulSoup
 import json
 import os
 from datetime import datetime
-from urllib.parse import urljoin
+import urllib3
+
+# SSL 경고 메세지 무시 설정
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 # ============================================
 # 설정 (나중에 GitHub Secrets에서 자동 가져옴)
@@ -224,8 +227,8 @@ def fetch_site_titles(url):
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
         }
         
-        response = requests.get(url, timeout=10, headers=headers)
-        response.encoding = 'utf-8'  # 한글 인코딩
+        response = requests.get(url, timeout=15, headers=headers, verify=False)
+        response.encoding = response.apparent_encoding or 'utf-8'  # 한글 인코딩
         
         soup = BeautifulSoup(response.content, 'html.parser')
         
@@ -301,13 +304,15 @@ def main():
                     found_new = True
                     messages.append(f"🎯 <b>{site_name}</b>\n{title}\n🔗 {site_url}\n")
     
-    # 새 공고가 있으면 텔레그램 발송
+# 새 공고가 있으면 텔레그램 발송 (10개씩 나누어 발송)
     if found_new and messages:
-        message_text = "🚀 새로운 채용 공고가 올라왔습니다!\n\n"
-        message_text += "\n".join(messages)
-        message_text += f"\n⏰ 확인 시간: {datetime.now().strftime('%Y-%m-%d %H:%M')}"
-        
-        send_telegram_message(message_text)
+        chunk_size = 10
+        for i in range(0, len(messages), chunk_size):
+            chunk = messages[i:i + chunk_size]
+            message_text = "🚀 새로운 채용 공고가 올라왔습니다!\n\n"
+            message_text += "\n".join(chunk)
+            message_text += f"\n⏰ 확인 시간: {datetime.now().strftime('%Y-%m-%d %H:%M')}"
+            send_telegram_message(message_text)
     else:
         print("\n✅ 새 공고 없음")
         send_telegram_message(f"✅ 확인됨 (새 공고 없음) - {datetime.now().strftime('%H:%M')}")

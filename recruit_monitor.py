@@ -63,7 +63,7 @@ SITES = [
     {"name": "경기공공보건의료지원단", "url": "https://ggpi.or.kr/board/notice_list.asp?cat=2&searchValue=&searchtxt="}
 ]
 
-KEYWORDS = ["채용", "모집", "합격", "공모", "인재", "직원", "기간제", "강사", "임용"]
+KEYWORDS = ["채용", "모집"]
 HISTORY_FILE = "/tmp/recruit_history.json"
 
 # ============================================

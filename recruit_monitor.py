@@ -4,25 +4,25 @@
 GitHub Actions에서 자동 실행됨
 """
 
-import requests
-from bs4 import BeautifulSoup
 import json
 import os
+import time
 from datetime import datetime
+import requests
 import urllib3
+from bs4 import BeautifulSoup
 
 # SSL 경고 메세지 무시 설정
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 # ============================================
-# 설정 (나중에 GitHub Secrets에서 자동 가져옴)
+# 설정
 # ============================================
 
-TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')  # GitHub Secrets에서 자동으로 받음
-TELEGRAM_CHAT_ID = os.getenv('TELEGRAM_CHAT_ID')  # GitHub Secrets에서 자동으로 받음
+TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
+TELEGRAM_CHAT_ID = os.getenv('TELEGRAM_CHAT_ID')
 
 # 모니터링할 사이트들
-# 여기에 당신의 사이트 추가하세요!
 SITES = [
     {
         "name": "남양주도시공사",
@@ -136,7 +136,7 @@ SITES = [
         "name": "포천종합사회복지관",
         "url": "https://www.pobok.or.kr/",
     },
-   {
+    {
         "name": "포천노인복지관",
         "url": "http://www.pcsc.kr/bbs/board.php?bo_table=employ",
     },
@@ -202,7 +202,7 @@ def load_history():
         try:
             with open(HISTORY_FILE, 'r', encoding='utf-8') as f:
                 return json.load(f)
-        except:
+        except Exception:
             return {}
     return {}
 
@@ -222,26 +222,24 @@ def check_keywords(text):
 def fetch_site_titles(url):
     """웹사이트에서 제목들 가져오기"""
     try:
-        # 한국 사이트 대비
         headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Accept-Language': 'ko-KR,ko;q=0.9'
         }
         
         response = requests.get(url, timeout=15, headers=headers, verify=False)
-        response.encoding = response.apparent_encoding or 'utf-8'  # 한글 인코딩
+        response.encoding = response.apparent_encoding or 'utf-8'
         
         soup = BeautifulSoup(response.content, 'html.parser')
-        
-        # 공통으로 사용되는 게시글 제목 태그들
         titles = []
         
-        # h1, h2, h3 태그에서 찾기
+        # 상단 메뉴 때문에 잘리는 현상을 막기 위해 100개까지 넉넉하게 스캔
         for tag in soup.find_all(['h1', 'h2', 'h3', 'a', 'td']):
             text = tag.get_text(strip=True)
-            if text and len(text) > 5:  # 너무 짧은 건 제외
-                titles.append(text[:100])  # 100자까지만
+            if text and len(text) > 5:
+                titles.append(text[:100])
         
-        return titles[:20]  # 상위 20개만
+        return titles[:100]
         
     except Exception as e:
         print(f"❌ {url} 접속 실패: {str(e)}")
@@ -258,7 +256,8 @@ def send_telegram_message(message):
         data = {
             "chat_id": TELEGRAM_CHAT_ID,
             "text": message,
-            "parse_mode": "HTML"
+            "parse_mode": "HTML",
+            "disable_web_page_preview": True
         }
         response = requests.post(url, data=data, timeout=10)
         
@@ -297,22 +296,27 @@ def main():
         # 채용 관련 제목 찾기
         for title in titles:
             if check_keywords(title):
-                # 이전에 본 것인지 확인
-                if title not in history:
+                # 기관명+제목을 조합해 고유 키로 비교 (기관 간 오염 방지)
+                history_key = f"{site_name}_{title}"
+                if history_key not in history:
                     print(f"   ✨ 신규: {title}")
-                    history[title] = datetime.now().isoformat()
+                    history[history_key] = datetime.now().isoformat()
                     found_new = True
                     messages.append(f"🎯 <b>{site_name}</b>\n{title}\n🔗 {site_url}\n")
     
-# 새 공고가 있으면 텔레그램 발송 (10개씩 나누어 발송)
+    # 새 공고가 있으면 텔레그램 발송 (10개씩 나누어 전부 발송)
     if found_new and messages:
         chunk_size = 10
-        for i in range(0, len(messages), chunk_size):
+        total_chunks = (len(messages) + chunk_size - 1) // chunk_size
+        
+        for idx, i in enumerate(range(0, len(messages), chunk_size)):
             chunk = messages[i:i + chunk_size]
-            message_text = "🚀 새로운 채용 공고가 올라왔습니다!\n\n"
+            message_text = f"🚀 새로운 채용 공고가 올라왔습니다! ({idx + 1}/{total_chunks})\n\n"
             message_text += "\n".join(chunk)
             message_text += f"\n⏰ 확인 시간: {datetime.now().strftime('%Y-%m-%d %H:%M')}"
+            
             send_telegram_message(message_text)
+            time.sleep(1)  # 텔레그램 도배 방지 락 해제용 대기 (1초)
     else:
         print("\n✅ 새 공고 없음")
         send_telegram_message(f"✅ 확인됨 (새 공고 없음) - {datetime.now().strftime('%H:%M')}")

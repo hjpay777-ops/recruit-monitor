@@ -8,6 +8,7 @@
 import json
 import os
 import re
+import time
 from datetime import datetime
 import requests
 from playwright.sync_api import sync_playwright
@@ -62,19 +63,17 @@ SITES = [
     {"name": "경기공공보건의료지원단", "url": "https://ggpi.or.kr/board/notice_list.asp?cat=2&searchValue=&searchtxt="}
 ]
 
-KEYWORDS = ["채용", "모집", "합격", "공모", "인재"]
+KEYWORDS = ["채용", "모집", "합격", "공모", "인재", "직원", "기간제", "강사", "임용"]
 HISTORY_FILE = "/tmp/recruit_history.json"
 
 # ============================================
-# 헬퍼 함수들
+# 헬퍼 함수
 # ============================================
 
 def clean_text(text):
-    """불필요한 공백 및 줄바꿈 정리"""
     return re.sub(r'\s+', ' ', text).strip()
 
 def load_history():
-    """이전 모니터링 기록 불러오기"""
     if os.path.exists(HISTORY_FILE):
         try:
             with open(HISTORY_FILE, 'r', encoding='utf-8') as f:
@@ -84,14 +83,12 @@ def load_history():
     return {}
 
 def save_history(history):
-    """최신 모니터링 기록 저장하기"""
     with open(HISTORY_FILE, 'w', encoding='utf-8') as f:
         json.dump(history, f, ensure_ascii=False, indent=2)
 
 def send_telegram_message(message):
-    """텔레그램 메시지 단일 발송"""
     if not TELEGRAM_TOKEN or not TELEGRAM_CHAT_ID:
-        print("⚠️ 텔레그램 설정(TELEGRAM_TOKEN, TELEGRAM_CHAT_ID)이 없습니다!")
+        print("⚠️ 텔레그램 설정이 없습니다.")
         return False
     
     try:
@@ -102,37 +99,80 @@ def send_telegram_message(message):
             "parse_mode": "HTML",
             "disable_web_page_preview": True
         }
-        response = requests.post(url, data=data, timeout=10)
-        return response.status_code == 200
+        res = requests.post(url, data=data, timeout=10)
+        return res.status_code == 200
     except Exception as e:
-        print(f"❌ 텔레그램 발송 오류: {str(e)}")
+        print(f"❌ 텔레그램 전송 실패: {e}")
         return False
 
+def send_safe_telegram_messages(messages_list):
+    header = "🚀 <b>새로운 채용 공고가 올라왔습니다!</b>\n\n"
+    footer = f"\n⏰ 확인 시간: {datetime.now().strftime('%Y-%m-%d %H:%M')}"
+    
+    current_chunk = header
+    
+    for item in messages_list:
+        if len(current_chunk) + len(item) > 3500:
+            send_telegram_message(current_chunk)
+            time.sleep(1)
+            current_chunk = "🚀 <b>이어서 전송합니다...</b>\n\n" + item
+        else:
+            current_chunk += item
+            
+    current_chunk += footer
+    send_telegram_message(current_chunk)
+
+def extract_titles_from_frame(frame, seen_set):
+    """특정 프레임/페이지에서 텍스트 추출하는 공통 로직"""
+    extracted = []
+    try:
+        # 게시판 제목이 될만한 태그 요소 검색
+        elements = frame.query_selector_all("a, td, div.title, h3, h4, span, .subject, .title")
+        for el in elements:
+            try:
+                text = clean_text(el.inner_text())
+                if 5 <= len(text) <= 120 and text not in seen_set:
+                    # 불필요한 공통 메뉴 필터링
+                    if not any(bad in text for bad in ["원문보기", "다운로드", "더보기", "바로가기", "검색", "로그인", "저작권", "개인정보"]):
+                        seen_set.add(text)
+                        extracted.append(text)
+            except Exception:
+                continue
+    except Exception:
+        pass
+    return extracted
+
 def fetch_titles_with_browser(context, url):
-    """Playwright 크롬 브라우저로 접속하여 페이지 내 텍스트 추출"""
     titles = []
     page = None
     try:
         page = context.new_page()
-        page.goto(url, wait_until="domcontentloaded", timeout=30000)
-        page.wait_for_timeout(2000)
+        # networkidle(네트워크 요청이 멈출 때까지) 대기하도록 설정
+        try:
+            page.goto(url, wait_until="networkidle", timeout=20000)
+        except Exception:
+            # networkidle이 타임아웃되면 domcontentloaded로 재시도
+            page.goto(url, wait_until="domcontentloaded", timeout=15000)
+            
+        page.wait_for_timeout(3000) # AJAX 렌더링을 위해 3초 확실하게 대기
         
-        elements = page.query_selector_all("a, td, div.title, h3, h4, span")
         seen = set()
         
-        for el in elements:
-            try:
-                text = clean_text(el.inner_text())
-                if 6 <= len(text) <= 120 and text not in seen:
-                    if not any(bad in text for bad in ["원문보기", "다운로드", "더보기", "바로가기", "검색", "로그인", "사이트맵"]):
-                        seen.add(text)
-                        titles.append(text)
-            except Exception:
-                continue
-                
+        # 1. 메인 페이지에서 제목 추출
+        titles.extend(extract_titles_from_frame(page, seen))
+        
+        # 2. 🔥 중요: 도시공사/문화재단용 iframe 및 childFrames 탐색
+        for frame in page.frames:
+            if frame != page:
+                try:
+                    frame_titles = extract_titles_from_frame(frame, seen)
+                    titles.extend(frame_titles)
+                except Exception:
+                    continue
+                    
         return titles
     except Exception as e:
-        print(f"   ❌ 접속/파싱 실패: {str(e)}")
+        print(f"   ❌ 접속/파싱 패스: {str(e)[:60]}...")
         return []
     finally:
         if page:
@@ -143,8 +183,7 @@ def fetch_titles_with_browser(context, url):
 # ============================================
 
 def main():
-    print(f"🤖 Playwright 기반 채용 공고 모니터링 시작: {datetime.now()}")
-    print("=" * 50)
+    print(f"🤖 채용 공고 모니터링 시작: {datetime.now()}")
     
     history = load_history()
     found_new = False
@@ -157,46 +196,37 @@ def main():
             ignore_https_errors=True
         )
         
-        for site in SITES:
+        for idx, site in enumerate(SITES, 1):
             site_name = site['name']
             site_url = site['url']
-            print(f"\n🔍 확인 중: {site_name} ({site_url})")
+            print(f"[{idx}/{len(SITES)}] 🔍 확인 중: {site_name}")
             
             titles = fetch_titles_with_browser(context, site_url)
-            
-            if not titles:
-                print("   → 가져온 제목이 없거나 접속에 실패했습니다.")
-                continue
-                
             site_found_count = 0
+            
             for title in titles:
                 if any(kw in title for kw in KEYWORDS):
                     history_key = f"{site_name}_{title}"
                     if history_key not in history:
-                        print(f"   ✨ 신규: {title}")
+                        print(f"   ✨ [신규 발견] {title}")
                         history[history_key] = datetime.now().isoformat()
                         found_new = True
-                        messages.append(f"🎯 <b>{site_name}</b>\n{title}\n🔗 {site_url}\n")
+                        messages.append(f"🎯 <b>{site_name}</b>\n{title}\n🔗 {site_url}\n\n")
                         site_found_count += 1
                         
             if site_found_count == 0:
-                print("   → 신규 채용 관련 공고 없음")
-                
+                print(f"   → (추출된 텍스트 수: {len(titles)}개 / 조건 일치 공고 없음)")
+                        
         browser.close()
 
-    # 텔레그램 메시지 단 1회 전송
     if found_new and messages:
-        message_text = f"🚀 새로운 채용 공고가 올라왔습니다!\n\n"
-        message_text += "\n".join(messages)
-        message_text += f"\n⏰ 확인 시간: {datetime.now().strftime('%Y-%m-%d %H:%M')}"
-        
-        send_telegram_message(message_text)
+        send_safe_telegram_messages(messages)
     else:
         print("\n✅ 새 공고 없음")
         send_telegram_message(f"✅ 확인됨 (새 공고 없음) - {datetime.now().strftime('%H:%M')}")
     
     save_history(history)
-    print(f"\n✅ 모니터링 완료")
+    print(f"\n✅ 완료")
 
 if __name__ == "__main__":
     main()

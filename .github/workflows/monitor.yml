@@ -1,0 +1,28 @@
+name: Recruit Monitor
+
+on:
+  schedule:
+    - cron: '0 0,3,9 * * *'
+  workflow_dispatch:
+
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v2
+    
+    - name: Python 설정
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.9'
+    
+    - name: 필요 라이브러리 설치
+      run: |
+        pip install requests beautifulsoup4
+    
+    - name: 공고 확인하기
+      env:
+        TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+        TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+      run: python recruit_monitor.py

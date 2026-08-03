@@ -10,16 +10,18 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     
     - name: Python 설정
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
-        python-version: '3.9'
+        python-version: '3.10'
     
     - name: 필요 라이브러리 설치
       run: |
-        pip install requests beautifulsoup4
+          python -m pip install --upgrade pip
+          pip install requests playwright
+          playwright install chromium --with-deps
     
     - name: 공고 확인하기
       env:

@@ -38,4 +38,9 @@ jobs:
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           if [ -f cafe_history.json ]; then
             git add cafe_history.json
-            git diff --quiet && git diff --staged --quiet || (git commit -m "update: cafe monitoring history" && git push)
+            if ! git diff --quiet || ! git diff --staged --quiet; then
+              git commit -m "update: cafe monitoring history"
+              git pull --rebase origin main  # 👈 충돌 방지를 위해 최신 내역 먼저 끌어오기
+              git push origin main
+            fi
+          fi

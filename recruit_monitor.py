@@ -67,7 +67,6 @@ SITES = [
 
 KEYWORDS = ["채용", "모집"]
 
-# 임시 폴더(/tmp/)가 아닌 프로젝트 루트에 생성하여 Git이 감지할 수 있게 설정
 HISTORY_FILE = "recruit_history.json"
 
 # ============================================
@@ -111,7 +110,8 @@ def send_telegram_message(message):
             "parse_mode": "HTML",
             "disable_web_page_preview": True
         }
-        res = requests.post(url, data=data, timeout=10)
+        # timeout 제한 제거
+        res = requests.post(url, data=data)
         return res.status_code == 200
     except Exception as e:
         print(f"❌ 텔레그램 전송 실패: {e}")
@@ -120,7 +120,6 @@ def send_telegram_message(message):
 def send_safe_telegram_messages(messages_list):
     """
     텔레그램 4000자 용량 제한 대응 분할 발송 함수
-    공고가 너무 많으면 메시지를 쪼개서 '이어서 전송합니다...'로 발송합니다.
     """
     header = "🚀 <b>새로운 채용 공고가 올라왔습니다!</b>\n\n"
     footer = f"\n⏰ 확인 시간: {get_kst_now().strftime('%Y-%m-%d %H:%M')}"
@@ -139,15 +138,28 @@ def send_safe_telegram_messages(messages_list):
     send_telegram_message(current_chunk)
 
 def extract_titles_from_frame(frame, seen_set):
-    """특정 프레임/페이지에서 텍스트 추출하는 공통 로직"""
+    """특정 프레임/페이지에서 텍스트 추출하는 공통 로직 (상단 공지 패치 완료)"""
     extracted = []
     try:
-        elements = frame.query_selector_all("a, td, div.title, h3, h4, span, .subject, .title")
+        # 상단 공지 전용 셀렉터(.notice, .bo_notice 등) 및 확장 셀렉터 적용
+        selectors = (
+            "a, td, div.title, h3, h4, span, .subject, .title, "
+            ".notice, .bo_notice, .notice_title, tr.notice a, tr.bo_notice a"
+        )
+        elements = frame.query_selector_all(selectors)
+        
         for el in elements:
             try:
                 text = clean_text(el.inner_text())
-                if 5 <= len(text) <= 120 and text not in seen_set:
-                    if not any(bad in text for bad in ["원문보기", "다운로드", "더보기", "바로가기", "검색", "로그인", "저작권", "개인정보"]):
+                
+                # 상단 공지글 길이 완화 (최대 150자)
+                if len(text) > 150:
+                    continue
+                    
+                if 5 <= len(text) <= 150 and text not in seen_set:
+                    # 완전 일치하는 단어만 필터링하여 상단 공지 억울한 제거 방지
+                    bad_keywords = ["원문보기", "다운로드", "더보기", "바로가기", "로그인", "저작권", "개인정보"]
+                    if not any(bad == text for bad in bad_keywords):
                         seen_set.add(text)
                         extracted.append(text)
             except Exception:
@@ -161,12 +173,14 @@ def fetch_titles_with_browser(context, url):
     page = None
     try:
         page = context.new_page()
+        # timeout=0 : 인위적인 제한 해제 (브라우저 물리적 제한만 작용)
         try:
-            page.goto(url, wait_until="networkidle", timeout=20000)
+            page.goto(url, wait_until="networkidle", timeout=0)
         except Exception:
-            page.goto(url, wait_until="domcontentloaded", timeout=15000)
+            page.goto(url, wait_until="domcontentloaded", timeout=0)
             
-        page.wait_for_timeout(3000)
+        # 느린 동적 script/상단 공지 완전히 불러오도록 대기
+        page.wait_for_timeout(5000)
         
         seen = set()
         titles.extend(extract_titles_from_frame(page, seen))
@@ -181,7 +195,7 @@ def fetch_titles_with_browser(context, url):
                     
         return titles
     except Exception as e:
-        print(f"   ❌ 접속/파싱 패스: {str(e)[:60]}...")
+        print(f"    ❌ 접속/파싱 패스: {str(e)[:60]}...")
         return []
     finally:
         if page:
@@ -217,14 +231,14 @@ def main():
                 if any(kw in title for kw in KEYWORDS):
                     history_key = f"{site_name}_{title}"
                     if history_key not in history:
-                        print(f"   ✨ [신규 발견] {title}")
+                        print(f"    ✨ [신규 발견] {title}")
                         history[history_key] = get_kst_now().isoformat()
                         found_new = True
                         messages.append(f"🎯 <b>{site_name}</b>\n{title}\n🔗 {site_url}\n\n")
                         site_found_count += 1
                         
             if site_found_count == 0:
-                print(f"   → (추출된 텍스트 수: {len(titles)}개 / 신규 공고 없음)")
+                print(f"    → (추출된 텍스트 수: {len(titles)}개 / 신규 공고 없음)")
                         
         browser.close()
 

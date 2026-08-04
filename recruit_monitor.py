@@ -65,7 +65,9 @@ SITES = [
 ]
 
 KEYWORDS = ["채용", "모집"]
-HISTORY_FILE = "/tmp/recruit_history.json"
+
+# 임시 폴더(/tmp/)가 아닌 프로젝트 루트에 생성하여 Git이 감지할 수 있게 설정
+HISTORY_FILE = "recruit_history.json"
 
 # ============================================
 # 헬퍼 함수
@@ -89,8 +91,12 @@ def load_history():
     return {}
 
 def save_history(history):
-    with open(HISTORY_FILE, 'w', encoding='utf-8') as f:
-        json.dump(history, f, ensure_ascii=False, indent=2)
+    try:
+        with open(HISTORY_FILE, 'w', encoding='utf-8') as f:
+            json.dump(history, f, ensure_ascii=False, indent=2)
+        print(f"💾 히스토리 파일 저장 완료 ({len(history)}건 기록됨)")
+    except Exception as e:
+        print(f"❌ 히스토리 저장 실패: {e}")
 
 def send_telegram_message(message):
     if not TELEGRAM_TOKEN or not TELEGRAM_CHAT_ID:
@@ -122,10 +128,9 @@ def send_safe_telegram_messages(messages_list):
     current_chunk = header
     
     for item in messages_list:
-        # 한 메시지가 3500자를 넘어가면 일단 발송하고 새로운 청크 시작
         if len(current_chunk) + len(item) > 3500:
             send_telegram_message(current_chunk)
-            time.sleep(1) # 연속 발송 도중 텔레그램 차단 방지용 1초 대기
+            time.sleep(1)
             current_chunk = "🚀 <b>이어서 전송합니다...</b>\n\n" + item
         else:
             current_chunk += item
@@ -137,13 +142,11 @@ def extract_titles_from_frame(frame, seen_set):
     """특정 프레임/페이지에서 텍스트 추출하는 공통 로직"""
     extracted = []
     try:
-        # 게시판 제목이 될만한 태그 요소 검색
         elements = frame.query_selector_all("a, td, div.title, h3, h4, span, .subject, .title")
         for el in elements:
             try:
                 text = clean_text(el.inner_text())
                 if 5 <= len(text) <= 120 and text not in seen_set:
-                    # 불필요한 공통 메뉴 필터링
                     if not any(bad in text for bad in ["원문보기", "다운로드", "더보기", "바로가기", "검색", "로그인", "저작권", "개인정보"]):
                         seen_set.add(text)
                         extracted.append(text)
@@ -158,21 +161,16 @@ def fetch_titles_with_browser(context, url):
     page = None
     try:
         page = context.new_page()
-        # networkidle(네트워크 요청이 멈출 때까지) 대기하도록 설정
         try:
             page.goto(url, wait_until="networkidle", timeout=20000)
         except Exception:
-            # networkidle이 타임아웃되면 domcontentloaded로 재시도
             page.goto(url, wait_until="domcontentloaded", timeout=15000)
             
-        page.wait_for_timeout(3000) # AJAX 렌더링을 위해 3초 확실하게 대기
+        page.wait_for_timeout(3000)
         
         seen = set()
-        
-        # 1. 메인 페이지에서 제목 추출
         titles.extend(extract_titles_from_frame(page, seen))
         
-        # 2. 도시공사/문화재단용 iframe 및 childFrames 탐색
         for frame in page.frames:
             if frame != page:
                 try:
@@ -226,18 +224,19 @@ def main():
                         site_found_count += 1
                         
             if site_found_count == 0:
-                print(f"   → (추출된 텍스트 수: {len(titles)}개 / 조건 일치 공고 없음)")
+                print(f"   → (추출된 텍스트 수: {len(titles)}개 / 신규 공고 없음)")
                         
         browser.close()
 
     if found_new and messages:
         send_safe_telegram_messages(messages)
     else:
-        print("\n✅ 새 공고 없음")
-        send_telegram_message(f"✅ 확인됨 (새 공고 없음) - {get_kst_now().strftime('%H:%M')}")
+        print("\n✅ 신규 공고가 없습니다.")
+        send_telegram_message(f"✅ 확인 완료 (신규 공고 없음) - {get_kst_now().strftime('%H:%M')}")
     
+    # 히스토리 파일 저장
     save_history(history)
-    print(f"\n✅ 완료")
+    print(f"\n✅ 프로세스 완료")
 
 if __name__ == "__main__":
     main()

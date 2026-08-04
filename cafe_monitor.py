@@ -47,8 +47,7 @@ HISTORY_FILE = "cafe_history.json"
 
 def get_kst_now():
     """무조건 KST(한국시간) 반환"""
-    KST = timezone(timedelta(hours=9))
-    return datetime.now(KST)
+    return datetime.now(timezone.utc) + timedelta(hours=9)
 
 def clean_text(text):
     return re.sub(r'\s+', ' ', text).strip()

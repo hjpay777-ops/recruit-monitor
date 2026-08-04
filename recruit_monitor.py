@@ -75,8 +75,7 @@ HISTORY_FILE = "recruit_history.json"
 
 def get_kst_now():
     """한국 표준시(KST, UTC+9) 시간을 반환"""
-    KST = timezone(timedelta(hours=9))
-    return datetime.now(KST)
+    return datetime.now(ZoneInfo('Asia/Seoul'))
 
 def clean_text(text):
     return re.sub(r'\s+', ' ', text).strip()

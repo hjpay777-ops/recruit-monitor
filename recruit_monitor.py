@@ -6,18 +6,6 @@
 - 분할 발송 로직 제거: 신규 공고를 1개의 텔레그램 메세지로 일괄 전송
 """
 
-제시해주신 코드에서 다른 부분은 단 1글자도 변경하지 않고, 요청하신 timeout=60000 (60초)과 wait_for_timeout(5000) (5초)만 정확하게 수정한 전체 코드입니다.
-
-📄 수정 완료된 전체 코드 (recruit_monitor.py)
-Python
-#!/usr/bin/env python3
-"""
-취업 공고 모니터링 봇 (Playwright 헤드리스 브라우저 - 단일 메세지 발송판)
-- JavaScript Dynamic UI 지원 및 공공기관 방화벽/SSL 오류 완벽 대응
-- 한국 시간(KST, UTC+9) 적용 완료
-- 분할 발송 로직 제거: 신규 공고를 1개의 텔레그램 메세지로 일괄 전송
-"""
-
 import json
 import os
 import re

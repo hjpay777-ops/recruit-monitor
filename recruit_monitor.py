@@ -30,7 +30,7 @@ SITES = [
     {"name": "남양주자원봉사센터", "url": "https://www.nyjvc.or.kr/bbs?table=mn07_01"},
     {"name": "남양주장애인복지관", "url": "https://nyjwel.or.kr/bbs/board.php?bo_table=recruitment"},
     {"name": "남양주노인복지관", "url": "https://www.nyjsw.or.kr/main/sub.html?pageCode=31"},
-    {"name": "남양주북부노인복지관", "url": "http://www.nyjbrc.com/bbs/board.php?bo_table=jobpost"},
+    {"name": "남양주북부장애인복지관", "url": "http://www.nyjbrc.com/bbs/board.php?bo_table=jobpost"},
     {"name": "남양주동부노인복지관", "url": "https://dongbusenior.or.kr/bbs/?bid=recruit"},
     {"name": "남양주다산노인복지관", "url": "https://dasanswc.or.kr/bbs/board.php?bo_table=recruit"},
     {"name": "남양주희망케어센터", "url": "https://hope.nyj.go.kr/www/74"},

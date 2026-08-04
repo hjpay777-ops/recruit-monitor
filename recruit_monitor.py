@@ -2,6 +2,7 @@
 """
 취업 공고 모니터링 봇 (Playwright 헤드리스 브라우저 - 단일 메세지 발송판)
 - JavaScript Dynamic UI 지원 및 공공기관 방화벽/SSL 오류 완벽 대응
+- 한국 시간(KST, UTC+9) 적용 완료
 - 분할 발송 로직 제거: 신규 공고를 1개의 텔레그램 메세지로 일괄 전송
 """
 
@@ -9,7 +10,7 @@ import json
 import os
 import re
 import time
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 import requests
 from playwright.sync_api import sync_playwright
 
@@ -58,7 +59,7 @@ SITES = [
     {"name": "경기환경에너지진흥원", "url": "https://www.ggeea.or.kr/statute"},
     {"name": "경기문화재단", "url": "https://www.ggcf.kr/boards/bulletinBoards/articles?category=03"},
     {"name": "경기주택도시공사", "url": "https://www.gh.or.kr/gh/employment-announcement.do"},
-    {"name": "경기복지재단", "url": "https://www.ggwf.or.kr/"},
+    {"name": "경기복지재단", "url": "https://ggwf.gg.go.kr/archives/category/gfnews/gfrecruit_wrap/gfrecruit"},
     {"name": "서울의료원", "url": "https://smc.recruiter.co.kr/career/job(1)"},
     {"name": "경기공공보건의료지원단", "url": "https://ggpi.or.kr/board/notice_list.asp?cat=2&searchValue=&searchtxt="}
 ]
@@ -69,6 +70,11 @@ HISTORY_FILE = "/tmp/recruit_history.json"
 # ============================================
 # 헬퍼 함수
 # ============================================
+
+def get_kst_now():
+    """한국 표준시(KST, UTC+9) 시간을 반환"""
+    KST = timezone(timedelta(hours=9))
+    return datetime.now(KST)
 
 def clean_text(text):
     return re.sub(r'\s+', ' ', text).strip()
@@ -106,15 +112,20 @@ def send_telegram_message(message):
         return False
 
 def send_safe_telegram_messages(messages_list):
+    """
+    텔레그램 4000자 용량 제한 대응 분할 발송 함수
+    공고가 너무 많으면 메시지를 쪼개서 '이어서 전송합니다...'로 발송합니다.
+    """
     header = "🚀 <b>새로운 채용 공고가 올라왔습니다!</b>\n\n"
-    footer = f"\n⏰ 확인 시간: {datetime.now().strftime('%Y-%m-%d %H:%M')}"
+    footer = f"\n⏰ 확인 시간: {get_kst_now().strftime('%Y-%m-%d %H:%M')}"
     
     current_chunk = header
     
     for item in messages_list:
+        # 한 메시지가 3500자를 넘어가면 일단 발송하고 새로운 청크 시작
         if len(current_chunk) + len(item) > 3500:
             send_telegram_message(current_chunk)
-            time.sleep(1)
+            time.sleep(1) # 연속 발송 도중 텔레그램 차단 방지용 1초 대기
             current_chunk = "🚀 <b>이어서 전송합니다...</b>\n\n" + item
         else:
             current_chunk += item
@@ -161,7 +172,7 @@ def fetch_titles_with_browser(context, url):
         # 1. 메인 페이지에서 제목 추출
         titles.extend(extract_titles_from_frame(page, seen))
         
-        # 2. 🔥 중요: 도시공사/문화재단용 iframe 및 childFrames 탐색
+        # 2. 도시공사/문화재단용 iframe 및 childFrames 탐색
         for frame in page.frames:
             if frame != page:
                 try:
@@ -183,7 +194,7 @@ def fetch_titles_with_browser(context, url):
 # ============================================
 
 def main():
-    print(f"🤖 채용 공고 모니터링 시작: {datetime.now()}")
+    print(f"🤖 채용 공고 모니터링 시작: {get_kst_now().strftime('%Y-%m-%d %H:%M:%S')}")
     
     history = load_history()
     found_new = False
@@ -209,7 +220,7 @@ def main():
                     history_key = f"{site_name}_{title}"
                     if history_key not in history:
                         print(f"   ✨ [신규 발견] {title}")
-                        history[history_key] = datetime.now().isoformat()
+                        history[history_key] = get_kst_now().isoformat()
                         found_new = True
                         messages.append(f"🎯 <b>{site_name}</b>\n{title}\n🔗 {site_url}\n\n")
                         site_found_count += 1
@@ -223,7 +234,7 @@ def main():
         send_safe_telegram_messages(messages)
     else:
         print("\n✅ 새 공고 없음")
-        send_telegram_message(f"✅ 확인됨 (새 공고 없음) - {datetime.now().strftime('%H:%M')}")
+        send_telegram_message(f"✅ 확인됨 (새 공고 없음) - {get_kst_now().strftime('%H:%M')}")
     
     save_history(history)
     print(f"\n✅ 완료")

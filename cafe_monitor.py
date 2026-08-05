@@ -10,6 +10,7 @@ import os
 import re
 import time
 from datetime import datetime, timezone, timedelta
+from zoneinfo import ZoneInfo
 import requests
 from playwright.sync_api import sync_playwright
 

@@ -61,6 +61,7 @@ SITES = [
     {"name": "경기문화재단", "url": "https://www.ggcf.kr/boards/bulletinBoards/articles?category=03"},
     {"name": "경기주택도시공사", "url": "https://www.gh.or.kr/gh/employment-announcement.do"},
     {"name": "경기복지재단", "url": "https://ggwf.gg.go.kr/archives/category/gfnews/gfrecruit_wrap/gfrecruit"},
+    {"name": "경기여성가족재단", "url": "https://www.gwff.kr/base/board/list?boardManagementNo=5&menuLevel=2&menuNo=22"},
     {"name": "서울의료원", "url": "https://smc.recruiter.co.kr/career/job(1)"},
     {"name": "경기공공보건의료지원단", "url": "https://ggpi.or.kr/board/notice_list.asp?cat=2&searchValue=&searchtxt="}
 ]

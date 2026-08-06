@@ -4,7 +4,7 @@ on:
   workflow_dispatch: # Actions 탭에서 수동 실행 가능
   schedule:
     # 3시간마다 실행 (KST 기준 (KST 기준 1, 4, 7, 10, 13, 16, 19, 22시 정각)
-    - cron: '0 1,4,7,10,13,16,19,22 * * *'
+    - cron: '5 0,4,8,12,16,20 * * *'
 
 jobs:
   build:

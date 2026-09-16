@@ -196,7 +196,10 @@ def fetch_titles_with_browser(context, url):
         return []
     finally:
         if page:
-            page.close()
+            try:
+                page.close()
+            except Exception:
+                pass  # 닫다가 뻗어도 무시하고 다음으로 넘어감
 
 # ============================================
 # 메인 실행부

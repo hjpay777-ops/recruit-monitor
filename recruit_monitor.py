@@ -71,7 +71,6 @@ HISTORY_FILE = "recruit_history.json"
 # ============================================
 
 def get_kst_now():
-    """한국 표준시(KST, UTC+9) 시간을 반환"""
     return datetime.now(ZoneInfo('Asia/Seoul'))
 
 def clean_text(text):
@@ -107,7 +106,6 @@ def send_telegram_message(message):
             "parse_mode": "HTML",
             "disable_web_page_preview": True
         }
-        # timeout 제한 제거
         res = requests.post(url, data=data)
         return res.status_code == 200
     except Exception as e:
@@ -115,9 +113,6 @@ def send_telegram_message(message):
         return False
 
 def send_safe_telegram_messages(messages_list):
-    """
-    텔레그램 4000자 용량 제한 대응 분할 발송 함수
-    """
     header = "🚀 <b>새로운 채용 공고가 올라왔습니다!</b>\n\n"
     footer = f"\n⏰ 확인 시간: {get_kst_now().strftime('%Y-%m-%d %H:%M')}"
     
@@ -135,10 +130,8 @@ def send_safe_telegram_messages(messages_list):
     send_telegram_message(current_chunk)
 
 def extract_titles_from_frame(frame, seen_set):
-    """특정 프레임/페이지에서 텍스트 추출하는 공통 로직 (상단 공지 패치 완료)"""
     extracted = []
     try:
-        # 상단 공지 전용 셀렉터(.notice, .bo_notice 등) 및 확장 셀렉터 적용
         selectors = (
             "a, td, div.title, h3, h4, span, .subject, .title, "
             ".notice, .bo_notice, .notice_title, tr.notice a, tr.bo_notice a"
@@ -149,12 +142,10 @@ def extract_titles_from_frame(frame, seen_set):
             try:
                 text = clean_text(el.inner_text())
                 
-                # 상단 공지글 길이 완화 (최대 150자)
                 if len(text) > 150:
                     continue
                     
                 if 5 <= len(text) <= 150 and text not in seen_set:
-                    # 완전 일치하는 단어만 필터링하여 상단 공지 억울한 제거 방지
                     bad_keywords = ["원문보기", "다운로드", "더보기", "바로가기", "로그인", "저작권", "개인정보"]
                     if not any(bad == text for bad in bad_keywords):
                         seen_set.add(text)
@@ -170,14 +161,9 @@ def fetch_titles_with_browser(context, url):
     page = None
     try:
         page = context.new_page()
-        # timeout=60000 : 상한 시간 60초 설정
-        try:
-            page.goto(url, wait_until="networkidle", timeout=60000)
-        except Exception:
-            page.goto(url, wait_until="domcontentloaded", timeout=60000)
-            
-        # 느린 동적 script/상단 공지 완전히 불러오도록 대기 (5초)
-        page.wait_for_timeout(5000)
+        page.goto(url, wait_until="domcontentloaded", timeout=15000)
+        
+        page.wait_for_timeout(3000)
         
         seen = set()
         titles.extend(extract_titles_from_frame(page, seen))
@@ -190,16 +176,12 @@ def fetch_titles_with_browser(context, url):
                 except Exception:
                     continue
                     
+        if page:
+            page.close()
         return titles
     except Exception as e:
         print(f"    ❌ 접속/파싱 패스: {str(e)[:60]}...")
         return []
-    finally:
-        if page:
-            try:
-                page.close()
-            except Exception:
-                pass  # 닫다가 뻗어도 무시하고 다음으로 넘어감
 
 # ============================================
 # 메인 실행부
@@ -248,7 +230,6 @@ def main():
         print("\n✅ 신규 공고가 없습니다.")
         send_telegram_message(f"✅ 확인 완료 (신규 공고 없음) - {get_kst_now().strftime('%H:%M')}")
     
-    # 히스토리 파일 저장
     save_history(history)
     print(f"\n✅ 프로세스 완료")
 

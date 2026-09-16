@@ -33,6 +33,7 @@ SITES = [
     {"name": "남양주북부장애인복지관", "url": "http://www.nyjbrc.com/bbs/board.php?bo_table=jobpost"},
     {"name": "남양주다산노인복지관", "url": "https://dasanswc.or.kr/bbs/board.php?bo_table=recruit"},
     {"name": "남양주희망케어센터", "url": "https://hope.nyj.go.kr/www/74"},
+    {"name": "남양주체육회", "url": "https://www.nyjsports.com/www/57"},
     {"name": "구리문화재단", "url": "https://www.guriart.or.kr/PageLink.do"},
     {"name": "구리문화원", "url": "https://gurimh.or.kr/bbs/board.php?bo_table=notice"},
     {"name": "구리농수산물공사", "url": "https://www.gamaco.co.kr/conIntroduction/employ/main"},
@@ -40,6 +41,8 @@ SITES = [
     {"name": "구리상권활성화재단", "url": "https://www.gurimr.or.kr/board/notice.do"},
     {"name": "구리자원봉사센터", "url": "https://www.guri1365.or.kr/21"},
     {"name": "구리종합사회복지관", "url": "http://www.guriwelfare.or.kr/bbs/zboard.php?id=TemP_recruit"},
+    {"name": "구리체육회", "url": "https://gurisports.kr/notice/notice04.php"},
+    {"name": "구리남양주교육지원청", "url":, "https://www.goegn.kr/goegn/na/ntt/selectNttList.do?mi=14082&bbsId=8654"},
     {"name": "포천도시공사", "url": "https://www.pcuc.kr/open_content/participation/recruit.jsp"},
     {"name": "포천문화재단", "url": "https://www.pcfac.or.kr/sub07/sub03.php"},
     {"name": "포천문화원", "url": "http://www.pcmh.or.kr/board2/index.html?d_name=002&menu=06"},
@@ -48,11 +51,13 @@ SITES = [
     {"name": "포천자원봉사센터", "url": "https://pcvc.kr/board/notice.asp"},
     {"name": "포천종합사회복지관", "url": "https://www.pobok.or.kr/"},
     {"name": "포천노인복지관", "url": "http://www.pcsc.kr/bbs/board.php?bo_table=employ"},
+    {"name": "포천체육회", "url": "http://www.pcsports.or.kr/bbs/board.php?bo_table=recruit"},
     {"name": "의정부도시공사", "url": "https://www.uiuc.or.kr/companyNotice/employmentPage/employment/list.do"},
     {"name": "의정부문화재단", "url": "https://www.uac.or.kr/newuac/community/community_09.php"},
     {"name": "의정부문화원", "url": "https://ujbcc.or.kr/bbs/board.php?bo_table=0301"},
     {"name": "의정부도시교육재단", "url": "https://www.uuli.or.kr/index.do?menu_id=00005064&servletPath=%2Findex.do"},
     {"name": "의정부장애인종합복지관", "url": "https://warmhand.or.kr/bbs/board.php?bo_table=0208"},
+    {"name": "의정부체육회", "url": "https://ujbsports.or.kr/bbs/board.php?bo_table=m5_3"},
     {"name": "경기환경에너지진흥원", "url": "https://www.ggeea.or.kr/statute"},
     {"name": "경기문화재단", "url": "https://www.ggcf.kr/boards/bulletinBoards/articles?category=03"},
     {"name": "경기주택도시공사", "url": "https://www.gh.or.kr/gh/employment-announcement.do"},
@@ -161,9 +166,17 @@ def fetch_titles_with_browser(context, url):
     page = None
     try:
         page = context.new_page()
-        page.goto(url, wait_until="domcontentloaded", timeout=15000)
+        try:
+            page.goto(url, wait_until="domcontentloaded", timeout=60000)
+        except Exception as e:
+            err_msg = str(e)
+            if "ERR_HTTP2_PROTOCOL_ERROR" in err_msg or "ERR_CONNECTION" in err_msg or "ERR_ABORTED" in err_msg:
+                print(f"    ❌ 방화벽/통신 에러로 즉시 패스: {err_msg[:40]}...")
+                return []
+            else:
+                raise e
         
-        page.wait_for_timeout(3000)
+        page.wait_for_timeout(5000)
         
         seen = set()
         titles.extend(extract_titles_from_frame(page, seen))

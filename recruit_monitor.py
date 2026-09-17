@@ -42,7 +42,7 @@ SITES = [
     {"name": "구리자원봉사센터", "url": "https://www.guri1365.or.kr/21"},
     {"name": "구리종합사회복지관", "url": "http://www.guriwelfare.or.kr/bbs/zboard.php?id=TemP_recruit"},
     {"name": "구리체육회", "url": "https://gurisports.kr/notice/notice04.php"},
-    {"name": "구리남양주교육지원청", "url":, "https://www.goegn.kr/goegn/na/ntt/selectNttList.do?mi=14082&bbsId=8654"},
+    {"name": "구리남양주교육지원청", "url": "https://www.goegn.kr/goegn/na/ntt/selectNttList.do?mi=14082&bbsId=8654"},
     {"name": "포천도시공사", "url": "https://www.pcuc.kr/open_content/participation/recruit.jsp"},
     {"name": "포천문화재단", "url": "https://www.pcfac.or.kr/sub07/sub03.php"},
     {"name": "포천문화원", "url": "http://www.pcmh.or.kr/board2/index.html?d_name=002&menu=06"},

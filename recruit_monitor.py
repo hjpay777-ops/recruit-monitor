@@ -65,7 +65,7 @@ SITES = [
     {"name": "경기주택도시공사", "url": "https://www.gh.or.kr/gh/employment-announcement.do"},
     {"name": "경기복지재단", "url": "https://ggwf.gg.go.kr/archives/category/gfnews/gfrecruit_wrap/gfrecruit"},
     {"name": "경기여성가족재단", "url": "https://www.gwff.kr/base/board/list?boardManagementNo=5&menuLevel=2&menuNo=22"},
-    {"naem": "경기도교육청 지방공무원", "url": "https://www.goe.go.kr/goe/na/ntt/selectNttList.do?mi=11039&bbsId=2584"},
+    {"name": "경기도교육청 지방공무원", "url": "https://www.goe.go.kr/goe/na/ntt/selectNttList.do?mi=11039&bbsId=2584"},
     {"name": "경기도교육청 교육공무직", "url": "https://www.goe.go.kr/goe/na/ntt/selectNttList.do?mi=11040&bbsId=2585"},
     {"name": "경기공공보건의료지원단", "url": "https://ggpi.or.kr/board/notice_list.asp?cat=2&searchValue=&searchtxt="},
     {"name": "서울의료원", "url": "https://smc.recruiter.co.kr/career/job(1)"}

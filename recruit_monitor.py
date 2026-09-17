@@ -52,19 +52,23 @@ SITES = [
     {"name": "포천종합사회복지관", "url": "https://www.pobok.or.kr/"},
     {"name": "포천노인복지관", "url": "http://www.pcsc.kr/bbs/board.php?bo_table=employ"},
     {"name": "포천체육회", "url": "http://www.pcsports.or.kr/bbs/board.php?bo_table=recruit"},
+    {"name": "포천교육지원청", "url": "https://www.goepc.kr/goepc/na/ntt/selectNttList.do?mi=2198&bbsId=2121"},
     {"name": "의정부도시공사", "url": "https://www.uiuc.or.kr/companyNotice/employmentPage/employment/list.do"},
     {"name": "의정부문화재단", "url": "https://www.uac.or.kr/newuac/community/community_09.php"},
     {"name": "의정부문화원", "url": "https://ujbcc.or.kr/bbs/board.php?bo_table=0301"},
     {"name": "의정부도시교육재단", "url": "https://www.uuli.or.kr/index.do?menu_id=00005064&servletPath=%2Findex.do"},
     {"name": "의정부장애인종합복지관", "url": "https://warmhand.or.kr/bbs/board.php?bo_table=0208"},
     {"name": "의정부체육회", "url": "https://ujbsports.or.kr/bbs/board.php?bo_table=m5_3"},
+    {"name": "의정부교육지원청", "url": "https://www.goeujb.kr/goeujb/na/ntt/selectNttList.do?mi=7023&bbsId=4119"},
     {"name": "경기환경에너지진흥원", "url": "https://www.ggeea.or.kr/statute"},
     {"name": "경기문화재단", "url": "https://www.ggcf.kr/boards/bulletinBoards/articles?category=03"},
     {"name": "경기주택도시공사", "url": "https://www.gh.or.kr/gh/employment-announcement.do"},
     {"name": "경기복지재단", "url": "https://ggwf.gg.go.kr/archives/category/gfnews/gfrecruit_wrap/gfrecruit"},
     {"name": "경기여성가족재단", "url": "https://www.gwff.kr/base/board/list?boardManagementNo=5&menuLevel=2&menuNo=22"},
-    {"name": "서울의료원", "url": "https://smc.recruiter.co.kr/career/job(1)"},
-    {"name": "경기공공보건의료지원단", "url": "https://ggpi.or.kr/board/notice_list.asp?cat=2&searchValue=&searchtxt="}
+    {"naem": "경기도교육청 지방공무원", "url": "https://www.goe.go.kr/goe/na/ntt/selectNttList.do?mi=11039&bbsId=2584"},
+    {"name": "경기도교육청 교육공무직", "url": "https://www.goe.go.kr/goe/na/ntt/selectNttList.do?mi=11040&bbsId=2585"},
+    {"name": "경기공공보건의료지원단", "url": "https://ggpi.or.kr/board/notice_list.asp?cat=2&searchValue=&searchtxt="},
+    {"name": "서울의료원", "url": "https://smc.recruiter.co.kr/career/job(1)"}
 ]
 
 KEYWORDS = ["채용", "모집"]

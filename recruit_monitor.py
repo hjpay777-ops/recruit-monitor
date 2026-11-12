@@ -239,8 +239,11 @@ def main():
             titles = fetch_titles_with_browser(context, site_url)
             site_found_count = 0
             
+            # 기관별 키워드 자동 선택
+            site_keywords = CUSTOM_KEYWORDS.get(site_name, KEYWORDS)
+            
             for title in titles:
-                if any(kw in title for kw in KEYWORDS):
+                if any(kw in title for kw in site_keywords):
                     history_key = f"{site_name}_{title}"
                     if history_key not in history:
                         print(f"    ✨ [신규 발견] {title}")

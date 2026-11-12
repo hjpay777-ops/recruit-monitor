@@ -34,6 +34,7 @@ SITES = [
     {"name": "남양주다산노인복지관", "url": "https://dasanswc.or.kr/bbs/board.php?bo_table=recruit"},
     {"name": "남양주희망케어센터", "url": "https://hope.nyj.go.kr/www/74"},
     {"name": "남양주체육회", "url": "https://www.nyjsports.com/www/57"},
+    {"name": "남양주가족센터", "url": "https://nyjfc.familynet.or.kr/center/lay1/bbs/S295T311C313/A/7/list.do"},
     {"name": "구리문화재단", "url": "https://www.guriart.or.kr/PageLink.do"},
     {"name": "구리문화원", "url": "https://gurimh.or.kr/bbs/board.php?bo_table=notice"},
     {"name": "구리농수산물공사", "url": "https://www.gamaco.co.kr/conIntroduction/employ/main"},
@@ -42,6 +43,7 @@ SITES = [
     {"name": "구리자원봉사센터", "url": "https://www.guri1365.or.kr/21"},
     {"name": "구리종합사회복지관", "url": "http://www.guriwelfare.or.kr/bbs/zboard.php?id=TemP_recruit"},
     {"name": "구리체육회", "url": "https://gurisports.kr/notice/notice04.php"},
+    {"name": "구리가족센터", "url": "https://guri.familynet.or.kr/center/lay1/bbs/S295T311C313/A/7/list.do"},
     {"name": "구리남양주교육지원청", "url": "https://www.goegn.kr/goegn/na/ntt/selectNttList.do?mi=14082&bbsId=8654"},
     {"name": "포천도시공사", "url": "https://www.pcuc.kr/open_content/participation/recruit.jsp"},
     {"name": "포천문화재단", "url": "https://www.pcfac.or.kr/sub07/sub03.php"},
@@ -52,6 +54,7 @@ SITES = [
     {"name": "포천종합사회복지관", "url": "https://www.pobok.or.kr/"},
     {"name": "포천노인복지관", "url": "http://www.pcsc.kr/bbs/board.php?bo_table=employ"},
     {"name": "포천체육회", "url": "http://www.pcsports.or.kr/bbs/board.php?bo_table=recruit"},
+    {"name": "포천가족센터", "url": "https://pcfc.familynet.or.kr/center/lay1/bbs/S295T311C313/A/7/list.do"},
     {"name": "포천교육지원청", "url": "https://www.goepc.kr/goepc/na/ntt/selectNttList.do?mi=2198&bbsId=2121"},
     {"name": "의정부도시공사", "url": "https://www.uiuc.or.kr/companyNotice/employmentPage/employment/list.do"},
     {"name": "의정부문화재단", "url": "https://www.uac.or.kr/newuac/community/community_09.php"},
@@ -59,6 +62,7 @@ SITES = [
     {"name": "의정부도시교육재단", "url": "https://www.uuli.or.kr/index.do?menu_id=00005064&servletPath=%2Findex.do"},
     {"name": "의정부장애인종합복지관", "url": "https://warmhand.or.kr/bbs/board.php?bo_table=0208"},
     {"name": "의정부체육회", "url": "https://ujbsports.or.kr/bbs/board.php?bo_table=m5_3"},
+    {"name": "의정부가족센터", "url": "https://ujbfc.familynet.or.kr/center/lay1/bbs/S295T311C313/A/7/list.do"},
     {"name": "의정부교육지원청", "url": "https://www.goeujb.kr/goeujb/na/ntt/selectNttList.do?mi=7023&bbsId=4119"},
     {"name": "경기환경에너지진흥원", "url": "https://www.ggeea.or.kr/statute"},
     {"name": "경기문화재단", "url": "https://www.ggcf.kr/boards/bulletinBoards/articles?category=03"},
@@ -68,10 +72,19 @@ SITES = [
     {"name": "경기도교육청 지방공무원", "url": "https://www.goe.go.kr/goe/na/ntt/selectNttList.do?mi=11039&bbsId=2584"},
     {"name": "경기도교육청 교육공무직", "url": "https://www.goe.go.kr/goe/na/ntt/selectNttList.do?mi=11040&bbsId=2585"},
     {"name": "경기공공보건의료지원단", "url": "https://ggpi.or.kr/board/notice_list.asp?cat=2&searchValue=&searchtxt="},
-    {"name": "서울의료원", "url": "https://smc.recruiter.co.kr/career/job(1)"}
+    {"name": "서울의료원", "url": "https://smc.recruiter.co.kr/career/job(1)"},
+
+    # 산림청 전용
+    {"name": "산림청", "url": "https://www.forest.go.kr/kfsweb/cop/bbs/selectBoardList.do?bbsId=BBSMSTR_1034&mn=NKFS_04_01_03"}
 ]
 
+# 모든 기관 공통
 KEYWORDS = ["채용", "모집"]
+
+# 산림청 공고만
+CUSTOM_KEYWORDS = {
+    "산림청": ["공무직", "경력", "연구사"]
+}
 
 HISTORY_FILE = "recruit_history.json"
 
